@@ -2,71 +2,68 @@ class Api::SleepRecordsController < ApplicationController
   before_action :set_sleep_record, only: [ :show, :clock_out ]
 
   def index
-    user =  current_user
-    records = user.sleep_records.order(created_at: :desc).limit(100)
-    render json: records.as_json(
-      only: [ :id, :user_id, :start_time, :end_time, :duration_seconds, :created_at ],
-      include: {
-        user: { only: [ :id, :name ] }
-      }
-    )
+    page     = (params[:page] || 1).to_i
+    per_page = [ (params[:per_page] || 50).to_i, 200 ].min
+    offset   = (page - 1) * per_page
+
+    records = current_user.sleep_records
+                .order(created_at: :desc)
+                .limit(per_page + 1)
+                .offset(offset)
+
+    has_more = records.size > per_page
+    records  = records.first(per_page)
+
+    render json: {
+      pagination: {
+        page: page,
+        per_page: per_page,
+        has_more: has_more
+      },
+      records: records.map { |r| SleepRecordSerializer.new(r).as_json }
+    }
   end
 
+
   def create
-    record= current_user.sleep_records.create!(start_time: create_params[:start_time] || Time.current)
-    render json: record.as_json(
-      only: [ :id, :user_id, :start_time, :end_time, :duration_seconds, :created_at ],
-      include: {
-        user: { only: [ :id, :name ] }
-      }
-    ), status: :created
+    if current_user.sleep_records.where(end_time: nil).exists?
+      return render json: { errors: [ "Already clocked in" ] }, status: :unprocessable_entity
+    end
+
+    record = current_user.sleep_records.create!(
+      start_time: create_params[:start_time] || Time.current
+    )
+    render json: SleepRecordSerializer.new(record).as_json, status: :created
   end
 
   def show
-    render json: @sleep_record.as_json(
-      only: [ :id, :user_id, :start_time, :end_time, :duration_seconds ],
-      include: {
-        user: { only: [ :id, :name ] }
-      }
-    )
+    render json: SleepRecordSerializer.new(@sleep_record).as_json
   end
 
   def clock_out
-    end_time = clock_out_params[:end_time] || Time.current
-
-    SleepRecord.transaction do
-      @sleep_record.lock!
-
+    @sleep_record.with_lock do
       if @sleep_record.end_time.present?
-        render json: { error: "Already clocked out" }, status: :unprocessable_entity and return
+        return render json: { errors: [ "Already clocked out" ] }, status: :unprocessable_entity
       end
 
-      @sleep_record.end_time = end_time
-      @sleep_record.duration_seconds = (end_time - @sleep_record.start_time).to_i
-
-      if @sleep_record.save
-        render json: @sleep_record.as_json(
-          only: [ :id, :user_id, :start_time, :end_time, :duration_seconds ],
-          include: {
-            user: { only: [ :id, :name ] }
-          }
-          )
-      else
-        render json: { error: @sleep_record.errors.full_messages }, status: :unprocessable_entity
-      end
+      @sleep_record.clock_out!(clock_out_params[:end_time] || Time.current)
+      render json: SleepRecordSerializer.new(@sleep_record).as_json
     end
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
   end
 
-private
+  private
+
   def create_params
     params.permit(:start_time)
   end
 
-  def set_sleep_record
-    @sleep_record = current_user.sleep_records.find(params[:id])
+  def clock_out_params
+    params.permit(:end_time)
   end
 
-  def clock_out_params
-    params.permit(:end_time, :id)
+  def set_sleep_record
+    @sleep_record = current_user.sleep_records.find(params[:id])
   end
 end
