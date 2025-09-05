@@ -13,11 +13,11 @@ Rails.application.routes.draw do
   # root "posts#index"
 
   namespace :api do
-    resources :users, only: [ :show ], param: :user_id do
+    resources :users, only: [ :show ] do
       post :follow, on: :member
-      resources :sleep_records, only: [ :index, :create, :show ] do
-        patch :clock_out, on: :member
-      end
+    end
+    resources :sleep_records, only: [ :index, :create, :show ] do
+      patch :clock_out, on: :member
     end
   end
 end

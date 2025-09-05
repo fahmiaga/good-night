@@ -67,6 +67,6 @@ private
   end
 
   def clock_out_params
-    params.permit(:end_time)
+    params.permit(:end_time, :id)
   end
 end
