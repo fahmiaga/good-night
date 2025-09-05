@@ -1,5 +1,5 @@
 class Api::UsersController < ApplicationController
-  before_action :set_user, only: [ :follow, :show ]
+  before_action :set_user, only: [ :follow, :show, :unfollow ]
 
 
   def show
@@ -50,6 +50,21 @@ class Api::UsersController < ApplicationController
     ), status: :created
     else
       render json: { error: follow.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def unfollow
+    followed = current_user.active_follows.find_by(follower_id: current_user.id, followed_id: @user.id)
+    if followed
+      followed.destroy
+      render json: followed.as_json(
+      only: [ :id, :created_at ],
+      include: {
+        followed: { only: [ :id, :name ] }
+      }
+    ), status: :ok
+    else
+      render json: { error: "Not following" }, status: :not_found
     end
   end
 

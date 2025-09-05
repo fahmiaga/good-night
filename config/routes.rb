@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   namespace :api do
     resources :users, only: [ :show ] do
       post :follow, on: :member
+      delete :unfollow, on: :member
     end
     resources :sleep_records, only: [ :index, :create, :show ] do
       patch :clock_out, on: :member
