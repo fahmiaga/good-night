@@ -7,3 +7,10 @@
 #   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
+40.times do
+  User.create!(
+    name: Faker::Name.unique.name
+  )
+end
+
+puts "Created sample users: #{User.count}"
