@@ -14,7 +14,9 @@ Rails.application.routes.draw do
 
   namespace :api do
     resources :users, only: [ :show ] do
-      resources :sleep_records, only: [ :index, :create, :show ]
+      resources :sleep_records, only: [ :index, :create, :show ] do
+        patch :clock_out, on: :member
+      end
     end
   end
 end
