@@ -6,22 +6,27 @@ class Api::SleepRecordsController < ApplicationController
     per_page = [ (params[:per_page] || 50).to_i, 200 ].min
     offset   = (page - 1) * per_page
 
-    records = current_user.sleep_records
-                .order(created_at: :desc)
-                .limit(per_page + 1)
-                .offset(offset)
+    cache_key = "user:#{current_user.id}:sleep_records:page#{page}:per#{per_page}"
+    records_data = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+      records = current_user.sleep_records
+                  .order(created_at: :desc)
+                  .limit(per_page + 1)
+                  .offset(offset)
 
-    has_more = records.size > per_page
-    records  = records.first(per_page)
+      has_more = records.size > per_page
+      records = records.first(per_page)
 
-    render json: {
-      pagination: {
-        page: page,
-        per_page: per_page,
-        has_more: has_more
-      },
-      records: records.map { |r| SleepRecordSerializer.new(r).as_json }
-    }
+      {
+        pagination: {
+          page: page,
+          per_page: per_page,
+          has_more: has_more
+        },
+        records: records.map { |r| SleepRecordSerializer.new(r).as_json }
+      }
+    end
+
+    render json: records_data
   end
 
 
