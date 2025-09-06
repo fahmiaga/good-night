@@ -62,7 +62,7 @@ class Api::UsersController < ApplicationController
       }
     ), status: :created
     else
-      render json: { error: follow.errors.full_messages }, status: :unprocessable_entity
+      render json: { error: follow.errors.full_messages }, status: :unprocessable_content
     end
   end
 

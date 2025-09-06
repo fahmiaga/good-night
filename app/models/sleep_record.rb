@@ -13,6 +13,13 @@ class SleepRecord < ApplicationRecord
     self[:duration_seconds] || (end_time && start_time && (end_time - start_time).to_i)
   end
 
+  def clock_out!(end_time = Time.current)
+    update!(
+      end_time: end_time,
+      duration_seconds: (end_time - start_time).to_i
+    )
+  end
+
   private
 
   def end_after_start

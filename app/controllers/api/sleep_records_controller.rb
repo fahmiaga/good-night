@@ -27,7 +27,7 @@ class Api::SleepRecordsController < ApplicationController
 
   def create
     if current_user.sleep_records.where(end_time: nil).exists?
-      return render json: { errors: [ "Already clocked in" ] }, status: :unprocessable_entity
+      return render json: { errors: [ "Already clocked in" ] }, status: :unprocessable_content
     end
 
     record = current_user.sleep_records.create!(
@@ -43,14 +43,14 @@ class Api::SleepRecordsController < ApplicationController
   def clock_out
     @sleep_record.with_lock do
       if @sleep_record.end_time.present?
-        return render json: { errors: [ "Already clocked out" ] }, status: :unprocessable_entity
+        return render json: { errors: [ "Already clocked out" ] }, status: :unprocessable_content
       end
 
       @sleep_record.clock_out!(clock_out_params[:end_time] || Time.current)
       render json: SleepRecordSerializer.new(@sleep_record).as_json
     end
   rescue ActiveRecord::RecordInvalid => e
-    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_content
   end
 
   private
