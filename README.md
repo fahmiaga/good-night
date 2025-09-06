@@ -70,6 +70,11 @@ bundle exec rspec spec/models/users_spec.rb
 
 ### 📦 API Endpoints
 
+*X-Current-User-Id Header*
+
+**This header must be included in every API request.
+Its value should be the user ID, which the system will treat as the currently logged-in user.**
+
 #### 1️⃣ Sleep Records
 
 ##### 1 Get All Sleep Records
