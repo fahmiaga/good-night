@@ -34,18 +34,7 @@ class Api::UsersController < ApplicationController
           has_more: has_more
         },
         users: grouped.map do |user, recs|
-          {
-            id: user.id,
-            name: user.name,
-            records: recs.map do |r|
-              {
-                id: r.id,
-                start_time: r.start_time,
-                end_time: r.end_time,
-                duration_seconds: r.duration_seconds
-              }
-            end
-          }
+          UserSerializer.new(user, recs).as_json
         end
       }
     end

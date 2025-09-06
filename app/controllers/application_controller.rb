@@ -1,8 +1,4 @@
 class ApplicationController < ActionController::API
-  # def current_user
-  #   @current_user ||= User.find(request.headers["X-Current-User-Id"])
-  # end
-
   before_action :set_current_user
 
   private
